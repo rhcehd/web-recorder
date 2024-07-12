@@ -1,3 +1,4 @@
+import pyautogui
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
@@ -6,7 +7,9 @@ import os
 import time
 
 driver: webdriver.Chrome
-download_dir = os.path.join(os.path.curdir, 'record\\')
+download_dir = os.path.join(os.path.abspath(os.path.curdir), 'record')
+project_name = "hello"
+base_url = "http://naver.com"
 
 
 def initialize_driver():
@@ -16,15 +19,9 @@ def initialize_driver():
     selenium_ide_path = os.path.join(os.path.curdir, 'Selenium IDE 3.17.2.0.crx')
     chrome_options.add_extension(selenium_ide_path)  # 확장 프로그램 파일 경로로 변경
     chrome_options.add_argument("--start-maximized")
+
     if not os.path.exists(download_dir):
         os.makedirs(download_dir)
-    chrome_options.add_experimental_option("prefs", {
-        #"download.default_directory": download_dir,
-        "download.default_directory": r"C:\Users\xxx\downloads\Test",
-        "download.prompt_for_download": False,  # 다운로드 확인 창 비활성화
-        "download.directory_upgrade": True,
-        "safebrowsing.enabled": True
-    })
 
     # ChromeDriver 설정 및 Chrome 브라우저 실행
     service = ChromeService(ChromeDriverManager().install())
@@ -53,20 +50,23 @@ def keep_alive_while_record():
         time.sleep(0.5)
 
 
-def save_web_record():
+def download_web_record():
     driver.find_element(By.CSS_SELECTOR, "#root > div > div > div.SplitPane.horizontal > div.Pane.horizontal.Pane1 > div > div.content > div > div.Pane.vertical.Pane1 > aside > div.tests_div.active > ul > li > div > a > button").click()
     time.sleep(1)
     driver.find_element(By.CSS_SELECTOR, "body > div:nth-child(16) > div > div > div > ul > li:nth-child(4) > a").click()
     time.sleep(1)
     driver.find_element(By.CSS_SELECTOR, "#python-pytest").click()
     driver.find_element(By.CSS_SELECTOR, "body > div:nth-child(14) > div > div > div > div > div.dialog__contents > form > div.dialog__footer > div > span:nth-child(1) > button").click()
+    time.sleep(1)
+    pyautogui.write(os.path.join(download_dir, f"{project_name}.py"))
+    pyautogui.press('enter')
 
 
 # 파일 다운로드가 완료되었는지 확인하는 함수
-def wait_for_downloads(download_dir, timeout=30):
+def wait_for_downloads(directory, timeout=30):
     end_time = time.time() + timeout
     while time.time() < end_time:
-        files = os.listdir(download_dir)
+        files = os.listdir(directory)
         if files:
             for file in files:
                 if file.endswith('.crdownload'):
@@ -80,7 +80,8 @@ def wait_for_downloads(download_dir, timeout=30):
 
 
 initialize_driver()
-start_web_record(project_name="hello", base_url="http://naver.com")
+start_web_record(project_name=project_name, base_url=base_url)
 keep_alive_while_record()
-save_web_record()
-wait_for_downloads(download_dir)
+download_web_record()
+#wait_for_downloads(directory=download_dir)
+time.sleep(2)
